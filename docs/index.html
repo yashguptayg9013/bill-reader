@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bill Reader demo</title>
+<meta name="description" content="Interactive demo: a photo of a supplier bill becomes a checked purchase entry, read by Claude.">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f5f2; --surface: #ffffff; --surface-2: #f0eee9; --line: #e2dfd8;
+    --fg: #1b1a17; --muted: #6b675e; --accent: #0f6e5c; --accent-soft: #e3f1ed; --on-accent: #ffffff;
+    --good: #1f7a4d; --good-soft: #e4f3ea; --warn: #a35a00; --warn-soft: #fbefdc;
+    --scan: rgba(15, 110, 92, .55);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141412; --surface: #1c1c19; --surface-2: #262622; --line: #34332e;
+      --fg: #ecebe6; --muted: #a19d92; --accent: #3fb59b; --accent-soft: #15302a; --on-accent: #0c1714;
+      --good: #4cc38a; --good-soft: #15291f; --warn: #f0a548; --warn-soft: #2e2213; --scan: rgba(63, 181, 155, .6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141412; --surface: #1c1c19; --surface-2: #262622; --line: #34332e;
+    --fg: #ecebe6; --muted: #a19d92; --accent: #3fb59b; --accent-soft: #15302a; --on-accent: #0c1714;
+    --good: #4cc38a; --good-soft: #15291f; --warn: #f0a548; --warn-soft: #2e2213; --scan: rgba(63, 181, 155, .6);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body.embedded { background: transparent; }
+  button { font: inherit; color: inherit; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 32px 16px; }
+  body.embedded .wrap { padding: 8px 0; }
+
+  .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin-bottom: 20px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  h1 { margin: 0; font-size: clamp(26px, 4vw, 38px); line-height: 1.15; letter-spacing: -.01em; text-wrap: balance; }
+  .lede { margin: 8px 0 0; max-width: 620px; color: var(--muted); text-wrap: pretty; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 14px; text-decoration: none; color: var(--fg); cursor: pointer; }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { opacity: .92; }
+  .btn svg { width: 16px; height: 16px; }
+
+  .card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; }
+  .tabs { display: flex; gap: 8px; padding: 12px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+  .tab { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; padding: 6px 12px 6px 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; text-align: left; }
+  .tab img { width: 34px; height: 44px; object-fit: cover; object-position: top; border-radius: 5px; border: 1px solid var(--line); }
+  .tab b { display: block; font-size: 14px; font-weight: 600; line-height: 1.2; }
+  .tab span { display: block; font-size: 12px; color: var(--muted); line-height: 1.2; }
+  .tab[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); }
+
+  .stage { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); min-height: 540px; }
+  @media (max-width: 860px) { .stage { grid-template-columns: 1fr; } }
+
+  .bill { position: relative; display: flex; align-items: flex-start; justify-content: center; padding: 24px 20px; background: var(--surface-2); border-right: 1px solid var(--line); overflow: hidden; }
+  @media (max-width: 860px) { .bill { border-right: 0; border-bottom: 1px solid var(--line); max-height: 380px; } }
+  .bill img { display: block; max-width: 100%; max-height: 500px; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+  @media (max-width: 860px) { .bill img { max-height: 340px; } }
+  .scan { position: absolute; left: 0; right: 0; top: 0; height: 90px; pointer-events: none; opacity: 0;
+          background: linear-gradient(to bottom, transparent, var(--scan) 85%, transparent 86%); }
+  .reading .scan { opacity: 1; animation: scan 1.5s ease-in-out infinite; }
+  @keyframes scan { from { transform: translateY(-90px); } to { transform: translateY(560px); } }
+  .status { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: none; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+  .reading .status { display: inline-flex; }
+  .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+
+  .result { padding: 18px 20px 20px; min-width: 0; }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 28px; margin-bottom: 14px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .pill.good { background: var(--good-soft); color: var(--good); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.muted { background: var(--surface-2); color: var(--muted); font-weight: 500; }
+
+  .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; margin-bottom: 16px; }
+  @media (max-width: 520px) { .fields { grid-template-columns: 1fr; } }
+  .field small { display: block; font-size: 12px; color: var(--muted); }
+  .field div { font-weight: 600; overflow-wrap: anywhere; }
+  .field .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-weight: 500; font-size: 14px; }
+  .field.wide { grid-column: 1 / -1; }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 14px; }
+  th { padding: 8px 10px; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; text-align: left; }
+  td { padding: 4px 10px; border-top: 1px solid var(--line); }
+  th.n, td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  td input { width: 100%; min-width: 56px; padding: 4px 6px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: inherit; font: inherit; text-align: right; font-variant-numeric: tabular-nums; }
+  td input:hover { border-color: var(--line); }
+  td input:focus { outline: none; border-color: var(--accent); background: var(--surface-2); }
+  tr.flag td { background: var(--warn-soft); }
+  .unit { font-size: 12px; color: var(--muted); }
+
+  .below { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 14px; }
+  @media (max-width: 620px) { .below { grid-template-columns: 1fr; } }
+  .checks { margin: 0; padding: 0; list-style: none; }
+  .checks li { display: flex; gap: 8px; padding: 3px 0; font-size: 14px; }
+  .checks .ic { flex: 0 0 18px; height: 18px; margin-top: 1px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: var(--on-accent); }
+  .checks .ok .ic { background: var(--good); }
+  .checks .bad .ic { background: var(--warn); }
+  .checks small { display: block; color: var(--muted); font-size: 12px; }
+  .totals { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; font-size: 14px; align-self: start; }
+  .totals dt { color: var(--muted); }
+  .totals dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .totals .grand { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); color: var(--fg); font-weight: 700; font-size: 16px; }
+  .hint { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+  .hint b { color: var(--fg); font-weight: 600; }
+
+  .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .linkbtn { padding: 0; border: 0; background: none; color: var(--accent); font-weight: 600; cursor: pointer; }
+
+  .in { animation: rise .35s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .hidden { visibility: hidden; }
+  @media (prefers-reduced-motion: reduce) { .in, .reading .scan, .status i { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="head">
+    <div>
+      <p class="eyebrow"><span class="dot"></span>Interactive demo</p>
+      <h1>Photo of a supplier bill → a checked purchase entry</h1>
+      <p class="lede">Pick a bill. Claude reads the supplier, items, quantities, GST and total, then the app checks the maths. Change a number to see the checks catch it.</p>
+    </div>
+    <div class="ctas" id="ctas"></div>
+  </div>
+
+  <div class="card">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="stage">
+      <div class="bill" id="bill">
+        <img id="billImg" alt="">
+        <div class="scan"></div>
+        <div class="status"><i></i><span id="statusText">Reading bill…</span></div>
+      </div>
+      <div class="result" id="result" aria-live="polite"></div>
+    </div>
+    <div class="foot">
+      <span id="source"></span>
+      <button class="linkbtn" id="replay" type="button">↻ Replay</button>
+    </div>
+  </div>
+</div>
+
+<script src="showcase-data.js"></script>
+<script>
+  // Links shown as buttons. Set LIVE_APP_URL once the full app is deployed.
+  const GITHUB_URL = "https://github.com/yashguptayg9013/bill-reader";
+  const LIVE_APP_URL = "";
+
+  const SAMPLES = [
+    { id: "intra-state", title: "GST tax invoice", note: "Mumbai · CGST + SGST", image: "samples/intra-state-invoice.png" },
+    { id: "inter-state", title: "Inter-state invoice", note: "Delhi · IGST, mixed rates", image: "samples/inter-state-invoice.png" },
+    { id: "phone-photo", title: "Phone photo", note: "Tilted, handwritten", image: "samples/phone-photo-bill.jpg" },
+  ];
+
+  const DATA = window.BILL_READER_SHOWCASE || { recorded: false, samples: {} };
+  const params = new URLSearchParams(location.search);
+  if (params.get("theme") === "light" || params.get("theme") === "dark") document.documentElement.dataset.theme = params.get("theme");
+  if (params.has("embed") || window.self !== window.top) document.body.classList.add("embedded");
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const inr = (n) => (n == null ? "—" : Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const dmy = (iso) => (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.split("-").reverse().join("/") : iso || "—");
+  const sleep = (ms) => new Promise((r) => setTimeout(r, reduceMotion ? 0 : ms));
+
+  // ---- CTAs ----
+  const gh = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
+  $("ctas").innerHTML =
+    (LIVE_APP_URL ? `<a class="btn primary" href="${LIVE_APP_URL}" target="_blank" rel="noopener">Try it with your own bill</a>` : "") +
+    `<a class="btn${LIVE_APP_URL ? "" : " primary"}" href="${GITHUB_URL}" target="_blank" rel="noopener">${gh}View the code</a>`;
+
+  $("source").textContent = DATA.recorded
+    ? `Replay of real Claude output (${DATA.model}) on made-up sample bills. Timings are from that run.`
+    : "Example results: the correct values for these made-up sample bills, not a live Claude reading.";
+  $("statusText").textContent = DATA.recorded ? "Reading bill with Claude…" : "Loading example result…";
+
+  // ---- Checks (same rules as the app's src/lib/checks.ts) ----
+  const GSTIN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+  const close = (a, b, tol = 1) => Math.abs(a - b) <= tol;
+  const sum = (xs) => xs.reduce((a, x) => a + (x ?? 0), 0);
+  const lineTaxable = (i) =>
+    i.taxable_value != null ? i.taxable_value : i.quantity != null && i.rate != null ? i.quantity * i.rate - (i.discount ?? 0) : i.amount;
+
+  function runChecks(bill) {
+    const out = [];
+    const t = bill.totals;
+    const items = bill.line_items;
+    const bad = items.filter((i) => i.quantity != null && i.rate != null && i.taxable_value != null && !close(i.quantity * i.rate - (i.discount ?? 0), i.taxable_value));
+    out.push({ label: "Qty × rate = line value", ok: bad.length === 0, detail: bad.length ? `Check: ${bad.map((i) => i.description).join(", ")}` : "Every line matches", bad });
+    const linesTotal = sum(items.map(lineTaxable));
+    if (t.taxable_value != null) out.push({ label: "Lines add up to the taxable total", ok: close(linesTotal, t.taxable_value, items.length), detail: `₹${inr(linesTotal)} vs ₹${inr(t.taxable_value)}` });
+    const taxable = t.taxable_value ?? linesTotal;
+    const expectedTax = sum(items.map((i) => ((lineTaxable(i) ?? 0) * (i.gst_rate ?? 0)) / 100));
+    const printedTax = sum([t.cgst, t.sgst, t.igst]);
+    if (printedTax > 0) out.push({ label: "GST matches the rates", ok: close(expectedTax, printedTax, Math.max(1, items.length * 0.5)), detail: `Expected ₹${inr(expectedTax)} vs ₹${inr(printedTax)}` });
+    if (t.cgst != null && t.sgst != null) out.push({ label: "CGST = SGST", ok: close(t.cgst, t.sgst), detail: `₹${inr(t.cgst)} / ₹${inr(t.sgst)}` });
+    if (t.grand_total != null) {
+      const computed = taxable + printedTax + (t.cess ?? 0) + (t.other_charges ?? 0) + (t.round_off ?? 0);
+      out.push({ label: "Grand total adds up", ok: close(computed, t.grand_total), detail: `₹${inr(computed)} vs ₹${inr(t.grand_total)}` });
+    }
+    if (bill.supplier.gstin) {
+      const g = bill.supplier.gstin.replace(/\s/g, "").toUpperCase();
+      out.push({ label: "Supplier GSTIN format", ok: GSTIN.test(g), detail: g });
+    }
+    return out;
+  }
+
+  // ---- Rendering ----
+  let current = null;
+  let runId = 0;
+
+  $("tabs").innerHTML = SAMPLES.map(
+    (s) => `<button class="tab" role="tab" type="button" data-id="${s.id}" aria-selected="false"><img src="${s.image}" alt=""><span><b>${esc(s.title)}</b><span>${esc(s.note)}</span></span></button>`,
+  ).join("");
+  $("tabs").addEventListener("click", (e) => {
+    const b = e.target.closest(".tab");
+    if (b) play(b.dataset.id);
+  });
+  $("replay").addEventListener("click", () => current && play(current.id));
+
+  async function play(id) {
+    const sample = SAMPLES.find((s) => s.id === id);
+    const rec = DATA.samples[id];
+    const run = ++runId;
+    current = { id, bill: rec ? structuredClone(rec.bill) : null, seconds: rec?.seconds };
+    document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.id === id)));
+    $("billImg").src = sample.image;
+    $("billImg").alt = `Sample bill: ${sample.title}`;
+    $("result").innerHTML = "";
+    if (!rec) {
+      $("result").innerHTML = `<p class="hint">No result recorded for this bill yet.</p>`;
+      return;
+    }
+    $("bill").classList.add("reading");
+    await sleep(1700);
+    if (run !== runId) return;
+    $("bill").classList.remove("reading");
+    render(true);
+  }
+
+  function render(animate) {
+    const { bill, seconds } = current;
+    const checks = runChecks(bill);
+    const failing = checks.filter((c) => !c.ok);
+    const flagged = new Set(checks[0].bad || []);
+    const t = bill.totals;
+    const igst = t.igst != null && t.igst !== 0;
+    let k = 0;
+    const d = () => (animate ? ` style="animation-delay:${(k++ * 70)}ms"` : "");
+    const cls = animate ? "in" : "";
+
+    $("result").innerHTML = `
+      <div class="meta">
+        ${seconds != null ? `<span class="pill good ${cls}"${d()}>Read in ${Number(seconds).toFixed(1)} s</span>` : ""}
+        <span class="pill ${failing.length ? "warn" : "good"} ${cls}"${d()}>${failing.length ? `${failing.length} check${failing.length > 1 ? "s" : ""} to review` : `All ${checks.length} checks pass`}</span>
+        <span class="pill muted ${cls}"${d()}>${bill.line_items.length} items</span>
+      </div>
+      <div class="fields">
+        <div class="field wide ${cls}"${d()}><small>Supplier</small><div>${esc(bill.supplier.name) || "—"}</div></div>
+        <div class="field ${cls}"${d()}><small>GSTIN</small><div class="mono">${esc(bill.supplier.gstin) || "—"}</div></div>
+        <div class="field ${cls}"${d()}><small>Invoice no. · Date</small><div>${esc(bill.invoice_number) || "—"} · ${esc(dmy(bill.invoice_date))}</div></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Rate</th><th class="n">Taxable</th><th class="n">GST</th></tr></thead>
+          <tbody>
+            ${bill.line_items.map((i, idx) => `
+              <tr class="${cls}${flagged.has(i) ? " flag" : ""}"${d()}>
+                <td>${esc(i.description)} ${i.unit ? `<span class="unit">${esc(i.unit)}</span>` : ""}</td>
+                <td class="n"><input inputmode="decimal" aria-label="Quantity for ${esc(i.description)}" data-row="${idx}" data-key="quantity" value="${i.quantity ?? ""}"></td>
+                <td class="n"><input inputmode="decimal" aria-label="Rate for ${esc(i.description)}" data-row="${idx}" data-key="rate" value="${i.rate ?? ""}"></td>
+                <td class="n">${inr(i.taxable_value)}</td>
+                <td class="n">${i.gst_rate != null ? i.gst_rate + "%" : "—"}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+      <div class="below">
+        <ul class="checks">
+          ${checks.map((c) => `<li class="${c.ok ? "ok" : "bad"} ${cls}"${d()}><span class="ic">${c.ok ? "✓" : "!"}</span><span>${esc(c.label)}<small>${esc(c.detail)}</small></span></li>`).join("")}
+        </ul>
+        <dl class="totals ${cls}"${d()}>
+          <dt>Taxable value</dt><dd>₹${inr(t.taxable_value)}</dd>
+          ${igst ? `<dt>IGST</dt><dd>₹${inr(t.igst)}</dd>` : `<dt>CGST</dt><dd>₹${inr(t.cgst)}</dd><dt>SGST</dt><dd>₹${inr(t.sgst)}</dd>`}
+          ${t.round_off != null ? `<dt>Round off</dt><dd>${t.round_off >= 0 ? "+" : "−"}₹${inr(Math.abs(t.round_off))}</dd>` : ""}
+          <dt class="grand">Grand total</dt><dd class="grand">₹${inr(t.grand_total)}</dd>
+        </dl>
+      </div>
+      <p class="hint"><b>Try it:</b> change a quantity or rate above. The checks flag the line that no longer adds up.</p>`;
+    postHeight();
+  }
+
+  // Edits re-run the checks without the entry animation.
+  $("result").addEventListener("input", (e) => {
+    const el = e.target.closest("input[data-row]");
+    if (!el || !current) return;
+    const v = el.value.replace(/,/g, "").trim();
+    const n = v === "" ? null : Number(v);
+    if (v !== "" && Number.isNaN(n)) return;
+    current.bill.line_items[Number(el.dataset.row)][el.dataset.key] = n;
+    const pos = el.selectionStart;
+    const sel = `input[data-row="${el.dataset.row}"][data-key="${el.dataset.key}"]`;
+    render(false);
+    const again = $("result").querySelector(sel);
+    again.focus();
+    again.setSelectionRange(pos, pos);
+  });
+
+  // Tell an embedding page how tall we are, so its iframe can fit exactly.
+  function postHeight() {
+    if (window.self === window.top) return;
+    parent.postMessage({ type: "bill-reader:height", height: Math.ceil($("app").getBoundingClientRect().height) }, "*");
+  }
+  if (window.self !== window.top) {
+    new ResizeObserver(postHeight).observe($("app"));
+    addEventListener("load", postHeight);
+    addEventListener("resize", postHeight);
+  }
+
+  play(SAMPLES[0].id);
+</script>
+</body>
+</html>

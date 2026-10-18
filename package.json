@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "eval": "node scripts/eval-samples.mjs",
-    "samples": "python3 scripts/make-samples.py"
+    "samples": "python3 scripts/make-samples.py",
+    "showcase:record": "node scripts/record-showcase.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",
