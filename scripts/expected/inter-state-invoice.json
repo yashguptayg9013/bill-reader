@@ -1,0 +1,49 @@
+{
+  "supplier_name": "Northline Home Goods Pvt. Ltd.",
+  "supplier_gstin": "07AAECN5512K1ZX",
+  "invoice_number": "NHG-2026-04412",
+  "invoice_date": "2026-10-03",
+  "line_items": [
+    {
+      "description": "Stainless Steel Water Bottle 1L",
+      "quantity": 60,
+      "rate": 185.0,
+      "taxable_value": 11100.0,
+      "gst_rate": 18
+    },
+    {
+      "description": "Cotton Kitchen Towels (Set of 3)",
+      "quantity": 80,
+      "rate": 120.0,
+      "taxable_value": 9600.0,
+      "gst_rate": 5
+    },
+    {
+      "description": "Ceramic Coffee Mug 350ml",
+      "quantity": 96,
+      "rate": 72.5,
+      "taxable_value": 6960.0,
+      "gst_rate": 12
+    },
+    {
+      "description": "Glass Storage Jar 1.5L",
+      "quantity": 48,
+      "rate": 140.0,
+      "taxable_value": 6720.0,
+      "gst_rate": 18
+    },
+    {
+      "description": "Freight & Packing",
+      "quantity": 1,
+      "rate": 1500.0,
+      "taxable_value": 1500.0,
+      "gst_rate": 18
+    }
+  ],
+  "taxable_value": 35880.0,
+  "cgst": null,
+  "sgst": null,
+  "igst": 4792.8,
+  "round_off": 0.2,
+  "grand_total": 40673.0
+}

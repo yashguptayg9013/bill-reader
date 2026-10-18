@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bill Reader card</title>
+<!--
+  Project card for your portfolio's projects grid.
+  Copy the <style> block and the <article> into your site.
+  Replace the demo link (search for YOUR-DEMO) and point the image at wherever
+  you host images/bill-photo.jpg.
+-->
+<style>
+  .br-card {
+    --br-bg: #ffffff; --br-fg: #1b1a17; --br-muted: #6b675e; --br-line: #e2dfd8;
+    --br-accent: #0f6e5c; --br-chip: #e3f1ed;
+    display: flex; flex-direction: column; max-width: 420px; overflow: hidden;
+    background: var(--br-bg); color: var(--br-fg); border: 1px solid var(--br-line); border-radius: 14px;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.5;
+  }
+  @media (prefers-color-scheme: dark) {
+    .br-card { --br-bg: #1c1c19; --br-fg: #ecebe6; --br-muted: #a19d92; --br-line: #34332e; --br-accent: #3fb59b; --br-chip: #15302a; }
+  }
+  .br-card img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: center 30%; }
+  .br-card__body { display: flex; flex-direction: column; gap: 10px; padding: 18px 20px 20px; }
+  .br-card .br-card__eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--br-accent); }
+  .br-card h3 { margin: 0; font-size: 20px; line-height: 1.25; }
+  .br-card p { margin: 0; font-size: 15px; color: var(--br-muted); }
+  .br-card__chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 0; padding: 0; list-style: none; }
+  .br-card__chips li { padding: 3px 9px; font-size: 12px; border-radius: 999px; background: var(--br-chip); color: var(--br-accent); }
+  .br-card__links { display: flex; gap: 10px; margin-top: 6px; }
+  .br-card__links a { padding: 8px 14px; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; border: 1px solid var(--br-line); color: var(--br-fg); }
+  .br-card__links a:first-child { background: var(--br-accent); border-color: var(--br-accent); color: var(--br-bg); }
+</style>
+</head>
+<body style="margin:0;padding:24px;background:#f6f5f2">
+
+<article class="br-card">
+  <img src="images/bill-photo.jpg" alt="A phone photo of a handwritten supplier bill that Bill Reader turns into a table">
+  <div class="br-card__body">
+    <p class="br-card__eyebrow">AI product · Built for my import business</p>
+    <h3>Bill Reader</h3>
+    <p>Photograph a supplier invoice and get the supplier, items, quantities, GST and total as a checked purchase entry, ready for Google Sheets or BillKhata.</p>
+    <ul class="br-card__chips">
+      <li>Claude vision</li>
+      <li>Next.js</li>
+      <li>TypeScript</li>
+      <li>Google Sheets</li>
+    </ul>
+    <div class="br-card__links">
+      <a href="https://YOUR-DEMO.vercel.app">Try the demo</a>
+      <a href="https://github.com/yashguptayg9013/bill-reader">Code</a>
+    </div>
+  </div>
+</article>
+
+</body>
+</html>

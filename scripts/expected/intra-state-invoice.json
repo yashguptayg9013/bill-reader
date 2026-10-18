@@ -1,0 +1,56 @@
+{
+  "supplier_name": "Shree Ganesh Electronics Traders",
+  "supplier_gstin": "27AAKFS4821M1Z5",
+  "invoice_number": "SGE/26-27/1187",
+  "invoice_date": "2026-09-12",
+  "line_items": [
+    {
+      "description": "USB-C Fast Charger 20W",
+      "quantity": 50,
+      "rate": 245.0,
+      "taxable_value": 12250.0,
+      "gst_rate": 18
+    },
+    {
+      "description": "Braided USB-C Cable 1m",
+      "quantity": 120,
+      "rate": 68.5,
+      "taxable_value": 8220.0,
+      "gst_rate": 18
+    },
+    {
+      "description": "TWS Earbuds Model X2",
+      "quantity": 30,
+      "rate": 610.0,
+      "taxable_value": 18300.0,
+      "gst_rate": 18
+    },
+    {
+      "description": "Power Bank 10000mAh",
+      "quantity": 25,
+      "rate": 720.0,
+      "taxable_value": 18000.0,
+      "gst_rate": 18
+    },
+    {
+      "description": "Aluminium Phone Stand",
+      "quantity": 40,
+      "rate": 95.0,
+      "taxable_value": 3800.0,
+      "gst_rate": 18
+    },
+    {
+      "description": "Tempered Glass Screen Guard",
+      "quantity": 200,
+      "rate": 18.0,
+      "taxable_value": 3600.0,
+      "gst_rate": 18
+    }
+  ],
+  "taxable_value": 64170.0,
+  "cgst": 5775.3,
+  "sgst": 5775.3,
+  "igst": null,
+  "round_off": 0.4,
+  "grand_total": 75721.0
+}

@@ -1,0 +1,42 @@
+{
+  "supplier_name": "Mahalaxmi Packaging Co.",
+  "supplier_gstin": "27ABCPM6623D1ZK",
+  "invoice_number": "472",
+  "invoice_date": "2026-10-09",
+  "line_items": [
+    {
+      "description": "Corrugated Box 12x10x8\"",
+      "quantity": 200,
+      "rate": 14.5,
+      "taxable_value": 2900.0,
+      "gst_rate": 18
+    },
+    {
+      "description": "Bubble Wrap Roll 1m x 50m",
+      "quantity": 6,
+      "rate": 420.0,
+      "taxable_value": 2520.0,
+      "gst_rate": 18
+    },
+    {
+      "description": "BOPP Tape 2\" 65m",
+      "quantity": 48,
+      "rate": 38.0,
+      "taxable_value": 1824.0,
+      "gst_rate": 18
+    },
+    {
+      "description": "Shipping Labels A4 (100 sh)",
+      "quantity": 5,
+      "rate": 260.0,
+      "taxable_value": 1300.0,
+      "gst_rate": 18
+    }
+  ],
+  "taxable_value": 8544.0,
+  "cgst": 768.96,
+  "sgst": 768.96,
+  "igst": null,
+  "round_off": 0.08,
+  "grand_total": 10082.0
+}
