@@ -20,7 +20,11 @@
       --good: #4cc38a; --good-soft: #15291f; --warn: #f0a548; --warn-soft: #2e2213; --scan: rgba(63, 181, 155, .6);
     }
   }
+  /* A forced theme must also force color-scheme, or an embedding browser in the
+     other mode paints an opaque backdrop behind the transparent page. */
+  :root[data-theme="light"] { color-scheme: light; }
   :root[data-theme="dark"] {
+    color-scheme: dark;
     --bg: #141412; --surface: #1c1c19; --surface-2: #262622; --line: #34332e;
     --fg: #ecebe6; --muted: #a19d92; --accent: #3fb59b; --accent-soft: #15302a; --on-accent: #0c1714;
     --good: #4cc38a; --good-soft: #15291f; --warn: #f0a548; --warn-soft: #2e2213; --scan: rgba(63, 181, 155, .6);
